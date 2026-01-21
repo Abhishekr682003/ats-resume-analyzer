@@ -4,7 +4,7 @@ services:
     name: ats-backend
     env: docker
     context: backend
-    # dockerfilePath defaults to Dockerfile in the context (backend/Dockerfile)
+    dockerfilePath: backend/Dockerfile
     healthCheckPath: /health
     envVars:
       - key: PORT
@@ -25,7 +25,7 @@ services:
     name: ats-frontend
     env: docker
     context: frontend
-    # dockerfilePath defaults to Dockerfile in the context (frontend/Dockerfile)
+    dockerfilePath: frontend/Dockerfile
     envVars:
       - key: REACT_APP_API_BASE_URL
         fromService:
