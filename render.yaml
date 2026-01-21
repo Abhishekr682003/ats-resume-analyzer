@@ -2,7 +2,7 @@ services:
   # Backend Service
   - type: web
     name: ats-backend
-    env: docker
+    runtime: docker
     plan: free
     dockerContext: backend
     dockerfilePath: backend/Dockerfile
@@ -10,12 +10,32 @@ services:
     envVars:
       - key: PORT
         value: "8080"
-      - key: DB_URL
-        sync: false
+      - key: DB_HOST
+        fromDatabase:
+          name: ats-db
+          property: host
+
+databases:
+  - name: ats-db
+    databaseName: ats_resume_db
+    user: ats_user
+    plan: free
+      - key: DB_PORT
+        fromDatabase:
+          name: ats-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: ats-db
+          property: database
       - key: DB_USERNAME
-        sync: false
+        fromDatabase:
+          name: ats-db
+          property: user
       - key: DB_PASSWORD
-        sync: false
+        fromDatabase:
+          name: ats-db
+          property: password
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGINS
@@ -24,7 +44,7 @@ services:
   # Frontend Service
   - type: web
     name: ats-frontend
-    env: docker
+    runtime: docker
     plan: free
     dockerContext: frontend
     dockerfilePath: frontend/Dockerfile
@@ -34,3 +54,8 @@ services:
           type: web
           name: ats-backend
           property: host
+databases:
+  - name: ats-db
+    databaseName: ats_resume_db
+    user: ats_user
+    plan: free
