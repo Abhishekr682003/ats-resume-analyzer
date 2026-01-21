@@ -31,4 +31,4 @@ services:
         fromService:
           type: web
           name: ats-backend
-          property: url
+          property: host

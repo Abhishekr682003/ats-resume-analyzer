@@ -15,7 +15,11 @@ import './App.css';
 
 // Set base URL from environment variable if available
 if (process.env.REACT_APP_API_BASE_URL) {
-  axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL;
+  let apiUrl = process.env.REACT_APP_API_BASE_URL;
+  if (!apiUrl.startsWith('http')) {
+    apiUrl = `https://${apiUrl}`;
+  }
+  axios.defaults.baseURL = apiUrl;
 }
 
 function App() {
