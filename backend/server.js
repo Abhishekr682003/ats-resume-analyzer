@@ -33,6 +33,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection Strategy for Serverless
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ats_resume_db';
 let cachedDb = null;
 
 const connectDB = async () => {
