@@ -1,13 +1,20 @@
 const fs = require('fs');
-const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 
+// Lazy load pdf-parse only when needed (fixes Vercel serverless issues)
 const extractTextFromPDF = async (filePath) => {
-    const dataBuffer = fs.readFileSync(filePath);
-    const parser = new PDFParse({ data: dataBuffer });
-    const result = await parser.getText();
-    await parser.destroy();
-    return result.text;
+    try {
+        // Only require pdf-parse when actually parsing a PDF
+        const { PDFParse } = require('pdf-parse');
+        const dataBuffer = fs.readFileSync(filePath);
+        const parser = new PDFParse({ data: dataBuffer });
+        const result = await parser.getText();
+        await parser.destroy();
+        return result.text;
+    } catch (error) {
+        console.error('PDF parsing error:', error);
+        throw new Error('Failed to parse PDF file');
+    }
 };
 
 const extractTextFromDOCX = async (filePath) => {
