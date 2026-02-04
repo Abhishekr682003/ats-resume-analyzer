@@ -32,28 +32,56 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Database Connection
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ats_resume_db';
+// MongoDB Connection Strategy for Serverless
+let cachedDb = null;
 
-console.log('Attempting to connect to MongoDB...');
+const connectDB = async () => {
+    if (cachedDb) {
+        // console.log('Using cached database instance');
+        return cachedDb;
+    }
 
-mongoose.connect(mongoURI, {
-    serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
-    socketTimeoutMS: 45000,
-    family: 4 // Use IPv4, skip trying IPv6
-})
-    .then(() => {
+    // Check if we have an active connection state
+    if (mongoose.connection.readyState === 1) {
+        cachedDb = mongoose.connection;
+        return cachedDb;
+    }
+
+    try {
+        console.log('Initiating new MongoDB connection...');
+        const conn = await mongoose.connect(mongoURI, {
+            serverSelectionTimeoutMS: 15000, // 15 seconds timeout
+            socketTimeoutMS: 45000,
+            family: 4, // Use IPv4
+            bufferCommands: false // Disable buffering to fail fast if no connection
+        });
+
+        cachedDb = conn.connection;
         console.log('✅ MongoDB Connected Successfully');
-        console.log(`Database: ${mongoose.connection.name}`);
-    })
-    .catch(err => {
+        return cachedDb;
+    } catch (err) {
         console.error('❌ MongoDB Connection Error:', err.message);
-        console.error('Please check:');
-        console.error('1. Your internet connection');
-        console.error('2. MongoDB Atlas IP whitelist (add 0.0.0.0/0 to allow all IPs)');
-        console.error('3. Database credentials in .env file');
-        console.error('4. Network/firewall settings');
-    });
+        throw err;
+    }
+};
+
+// Middleware to ensure database is connected before handling requests
+app.use(async (req, res, next) => {
+    // Skip DB connection for health check and static files
+    if (req.path === '/api/health' || req.path.startsWith('/uploads')) {
+        return next();
+    }
+
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(500).json({
+            message: 'Database connection failed',
+            error: error.message
+        });
+    }
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
